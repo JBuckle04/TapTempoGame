@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const nearestBeatTime = nearestBeat * targetBeatInterval;
         const offsetSeconds = elapsedSeconds - nearestBeatTime;
         const absOffset = Math.abs(offsetSeconds);
-        const perfectWindow = 0.08;
+        const perfectWindow = 0.11;
 
         if (absOffset <= perfectWindow) {
             setTimingFeedback('Perfect', 'perfect');
