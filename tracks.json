@@ -1,5 +1,15 @@
 [
     {
+        "name": "Practice Track",
+        "file": "practice124.mp3",
+        "bpm": 124
+    },
+    {
+        "name": "Bad Girls",
+        "file": "badgirls143.mp3",
+        "bpm": 143
+    },
+    {
         "name": "Better Off Alone",
         "file": "betteroffalone.mp3",
         "bpm": 128
@@ -13,5 +23,16 @@
         "name": "Paper Planes",
         "file": "paperplanes86.mp3",
         "bpm": 86
+    },
+    {
+        "name": "Glad You Came",
+        "file": "gladyoucame127.mp3",
+        "bpm": 127
+    },
+    {
+        "name": "Summer",
+        "file": "summer142.mp3",
+        "bpm": 142
+
     }
 ]
