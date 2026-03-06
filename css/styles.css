@@ -93,6 +93,44 @@ button {
     color: white;
 }
 
+.user-display {
+    color: #00d4ff;
+    font-size: 14px;
+    margin: 10px 0;
+}
+
+#leaderboard-display {
+    margin-top: 30px;
+    width: 100%;
+    text-align: left;
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background-color: #2a2a2a;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid #444;
+}
+
+.leaderboard-table th {
+    background-color: #00a8ff;
+    color: white;
+    font-weight: bold;
+}
+
+.leaderboard-table tr:hover {
+    background-color: #333;
+}
+
 /* Mobile optimizations */
 @media (max-width: 768px) {
     .container {

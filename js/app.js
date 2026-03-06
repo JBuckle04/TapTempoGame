@@ -1,4 +1,22 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Check if user name is already set
+    let userName = getUserName();
+    
+    if (!userName) {
+        // Prompt for user name
+        userName = prompt('Enter your name:');
+        if (!userName || userName.trim() === '') {
+            userName = 'Anonymous';
+        }
+        setUserName(userName);
+    }
+    
+    // Update the display to show current user
+    const userDisplay = document.getElementById('user-display');
+    if (userDisplay) {
+        userDisplay.textContent = `Player: ${userName}`;
+    }
+    
     fetch('tracks.json')
         .then(response => response.json())
         .then(tracks => {

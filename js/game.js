@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
         scoreDisplay.textContent = `Score: ${Math.round(totalScore)}`;
     }
 
-    function calculateScore() {
+    async function calculateScore() {
         if (tapTimes.length < 2) {
             finalScore.textContent = 'Not enough taps to calculate score.';
         } else {
@@ -82,9 +82,33 @@ document.addEventListener('DOMContentLoaded', function() {
             const accuracy = Math.max(0, 100 - Math.abs(bpm - userBpm));
             const totalScore = accuracy * 100;
             finalScore.innerHTML = `Total Score: ${Math.round(totalScore)} / 10000<br>Accuracy: ${Math.round(accuracy)}%<br>Your BPM: ${Math.round(userBpm)}, Actual BPM: ${bpm}`;
+            
+            // Save score to Supabase
+            await saveScore(name, Math.round(totalScore), Math.round(accuracy), Math.round(userBpm), bpm);
+            
+            // Fetch and display leaderboard
+            const leaderboard = await getTrackLeaderboard(name, 10);
+            displayLeaderboard(leaderboard);
         }
         document.getElementById('game-area').style.display = 'none';
         results.style.display = 'block';
+    }
+
+    function displayLeaderboard(leaderboard) {
+        const leaderboardDisplay = document.getElementById('leaderboard-display');
+        if (!leaderboardDisplay) return;
+        
+        if (leaderboard.length === 0) {
+            leaderboardDisplay.innerHTML = '<p>No scores yet</p>';
+            return;
+        }
+        
+        let html = '<h3>Top Scores</h3><table class="leaderboard-table"><tr><th>Rank</th><th>Player</th><th>Score</th><th>Accuracy</th></tr>';
+        leaderboard.forEach((entry, index) => {
+            html += `<tr><td>${index + 1}</td><td>${entry.user_name}</td><td>${entry.score}</td><td>${entry.accuracy}%</td></tr>`;
+        });
+        html += '</table>';
+        leaderboardDisplay.innerHTML = html;
     }
 
     backButton.addEventListener('click', () => {
