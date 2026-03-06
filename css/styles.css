@@ -69,6 +69,26 @@ h1 {
     color: #00d4ff;
 }
 
+#timing-feedback {
+    min-height: 20px;
+    margin: 10px 0 0;
+    font-size: 14px;
+    font-weight: bold;
+    color: #a8e9ff;
+}
+
+#timing-feedback.perfect {
+    color: #00d977;
+}
+
+#timing-feedback.early {
+    color: #ffb347;
+}
+
+#timing-feedback.late {
+    color: #ff7070;
+}
+
 button {
     padding: 10px 20px;
     font-size: 16px;

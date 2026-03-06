@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let progressInterval = null;
     let progressStartTime = null;
     const tapButton = document.getElementById('tap-button');
+    const timingFeedback = document.getElementById('timing-feedback');
     const playButton = document.getElementById('play-button');
     const stopButton = document.getElementById('stop-button');
     const scoreDisplay = document.getElementById('score-display');
@@ -48,6 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let turnstileToken = null;
     let liveMissDecayMultiplier = 1;
     let lastDecaySecond = 0;
+    let feedbackTimeout = null;
 
     if (userDisplayGame) {
         const currentUser = getUserName() || 'Anonymous';
@@ -112,7 +114,51 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    playButton.addEventListener('click', () => {
+    function setTimingFeedback(message, stateClass) {
+        if (!timingFeedback) return;
+
+        timingFeedback.textContent = message;
+        timingFeedback.classList.remove('perfect', 'early', 'late');
+        if (stateClass) {
+            timingFeedback.classList.add(stateClass);
+        }
+
+        if (feedbackTimeout) {
+            clearTimeout(feedbackTimeout);
+        }
+
+        if (stateClass) {
+            feedbackTimeout = setTimeout(() => {
+                timingFeedback.classList.remove('perfect', 'early', 'late');
+            }, 500);
+        }
+    }
+
+    function classifyTapTiming(tapTimestamp) {
+        if (!progressStartTime) {
+            return;
+        }
+
+        const elapsedSeconds = Math.max(0, (tapTimestamp - progressStartTime) / 1000);
+        const nearestBeat = Math.round(elapsedSeconds / targetBeatInterval);
+        const nearestBeatTime = nearestBeat * targetBeatInterval;
+        const offsetSeconds = elapsedSeconds - nearestBeatTime;
+        const absOffset = Math.abs(offsetSeconds);
+        const perfectWindow = 0.08;
+
+        if (absOffset <= perfectWindow) {
+            setTimingFeedback('Perfect', 'perfect');
+            return;
+        }
+
+        if (offsetSeconds < 0) {
+            setTimingFeedback('Too early', 'early');
+        } else {
+            setTimingFeedback('Too late', 'late');
+        }
+    }
+
+    function startGame() {
         audio.currentTime = 0;
         audio.play();
         isPlaying = true;
@@ -123,8 +169,9 @@ document.addEventListener('DOMContentLoaded', function() {
         scoreDisplay.textContent = 'Score: 0';
         results.style.display = 'none';
         document.getElementById('game-area').style.display = 'block';
-        playButton.disabled = true;
+        tapButton.textContent = 'TAP';
         stopButton.disabled = false;
+        setTimingFeedback('Go!', 'perfect');
 
         updateProgressUi(0);
         progressStartTime = Date.now();
@@ -140,22 +187,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 audio.currentTime = 0;
                 isPlaying = false;
                 songCompleted = true;
-                playButton.disabled = false;
+                tapButton.textContent = 'TAP TO START';
                 stopButton.disabled = true;
                 clearInterval(progressInterval);
                 updateProgressUi(MAX_PLAY_SECONDS);
                 calculateScore();
             }
         }, 100);
-    });
+    }
+
+    if (playButton) {
+        playButton.style.display = 'none';
+        playButton.disabled = true;
+    }
+
+    tapButton.textContent = 'TAP TO START';
 
     stopButton.addEventListener('click', () => {
         audio.pause();
         audio.currentTime = 0;
         isPlaying = false;
-        playButton.disabled = false;
+        tapButton.textContent = 'TAP TO START';
         stopButton.disabled = true;
-        scoreDisplay.textContent = 'Song paused. Click Play to try again.';
+        scoreDisplay.textContent = 'Song paused. Tap to start again.';
+        setTimingFeedback('Tap to start', null);
         if (progressInterval) clearInterval(progressInterval);
         updateProgressUi(0);
     });
@@ -164,27 +219,34 @@ document.addEventListener('DOMContentLoaded', function() {
     audio.addEventListener('ended', () => {
         isPlaying = false;
         songCompleted = true;
-        playButton.disabled = false;
+        tapButton.textContent = 'TAP TO START';
         stopButton.disabled = true;
         if (progressInterval) clearInterval(progressInterval);
         updateProgressUi(MAX_PLAY_SECONDS);
         calculateScore();
     });
 
-    tapButton.addEventListener('click', () => {
-        if (isPlaying) {
-            tapTimes.push(Date.now());
-            updateScore();
+    function handleTapInput() {
+        if (!isPlaying) {
+            startGame();
         }
-    });
+
+        if (!isPlaying) {
+            return;
+        }
+
+        const tapTimestamp = Date.now();
+        tapTimes.push(tapTimestamp);
+        classifyTapTiming(tapTimestamp);
+        updateScore();
+    }
+
+    tapButton.addEventListener('click', handleTapInput);
 
     // For mobile touch
     tapButton.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        if (isPlaying) {
-            tapTimes.push(Date.now());
-            updateScore();
-        }
+        handleTapInput();
     });
 
     function updateScore() {
