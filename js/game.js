@@ -65,7 +65,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const avgInterval = intervals.reduce((a, b) => a + b) / intervals.length;
         const userBpm = 60 / avgInterval;
         const accuracy = Math.max(0, 100 - Math.abs(bpm - userBpm));
-        scoreDisplay.textContent = `Score: ${Math.round(accuracy)}`;
+        const totalScore = accuracy * 100;
+        scoreDisplay.textContent = `Score: ${Math.round(totalScore)}`;
     }
 
     function calculateScore() {
@@ -79,7 +80,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const avgInterval = intervals.reduce((a, b) => a + b) / intervals.length;
             const userBpm = 60 / avgInterval;
             const accuracy = Math.max(0, 100 - Math.abs(bpm - userBpm));
-            finalScore.textContent = `Your BPM: ${Math.round(userBpm)}, Actual BPM: ${bpm}, Score: ${Math.round(accuracy)}%`;
+            const totalScore = accuracy * 100;
+            finalScore.innerHTML = `Total Score: ${Math.round(totalScore)} / 10000<br>Accuracy: ${Math.round(accuracy)}%<br>Your BPM: ${Math.round(userBpm)}, Actual BPM: ${bpm}`;
         }
         document.getElementById('game-area').style.display = 'none';
         results.style.display = 'block';
