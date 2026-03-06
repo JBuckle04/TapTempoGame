@@ -5,6 +5,13 @@
         "bpm": 128
     },
     {
-
+        "name": "Best Song Ever",
+        "file": "bestsongever.mp3",
+        "bpm": 124
+    },
+    {
+        "name": "Paper Planes",
+        "file": "paperplanes86.mp3",
+        "bpm": 86
     }
 ]
