@@ -34,5 +34,15 @@
         "file": "summer142.mp3",
         "bpm": 142
 
+    },
+    {
+        "name": "Ice Ice Baby",
+        "file": "iceicebaby116.mp3",
+        "bpm": 116
+    },
+    {
+        "name": "Livin' La Vida Loca",
+        "file": "livinlavida118.mp3",
+        "bpm": 118
     }
 ]
