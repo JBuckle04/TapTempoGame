@@ -23,20 +23,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let tapTimes = [];
     let isPlaying = false;
+    let songCompleted = false;
 
     playButton.addEventListener('click', () => {
         audio.play();
         isPlaying = true;
+        songCompleted = false;
         tapTimes = [];
         scoreDisplay.textContent = 'Score: 0';
         results.style.display = 'none';
         document.getElementById('game-area').style.display = 'block';
+        playButton.disabled = true;
+        stopButton.disabled = false;
     });
 
     stopButton.addEventListener('click', () => {
         audio.pause();
         audio.currentTime = 0;
         isPlaying = false;
+        playButton.disabled = false;
+        stopButton.disabled = true;
+        scoreDisplay.textContent = 'Song paused. Click Play to try again.';
+    });
+
+    // When the song ends, calculate and submit the score
+    audio.addEventListener('ended', () => {
+        isPlaying = false;
+        songCompleted = true;
+        playButton.disabled = false;
+        stopButton.disabled = true;
         calculateScore();
     });
 

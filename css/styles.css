@@ -99,6 +99,18 @@ button {
     margin: 10px 0;
 }
 
+#instructions {
+    color: #ff9800;
+    font-size: 14px;
+    margin: 15px 0;
+    font-weight: bold;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 #leaderboard-display {
     margin-top: 30px;
     width: 100%;
