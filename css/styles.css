@@ -205,8 +205,11 @@ button:disabled {
 /* Progress UI */
 #progress-container {
     width: min(520px, 92%);
+    max-width: 520px;
     height: 18px;
     margin: 8px auto 4px;
+    align-self: center;
+    display: block;
     border-radius: 999px;
     background-color: #2f2f2f;
     border: 1px solid #4a4a4a;
@@ -225,6 +228,7 @@ button:disabled {
     color: #a8e9ff;
     font-size: 13px;
     text-align: center;
+    width: 100%;
 }
 
 /* Modal Styles */
