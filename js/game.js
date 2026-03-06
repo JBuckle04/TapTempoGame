@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const progressBar = document.getElementById('progress-bar');
     const progressTime = document.getElementById('progress-time');
     const MAX_PLAY_SECONDS = 100;
+    const targetBeatInterval = 60 / bpm;
+    const pauseIntervalMultiplier = 2.25;
+    const missedBeatPenalty = 0.06;
     let progressInterval = null;
     let progressStartTime = null;
     const tapButton = document.getElementById('tap-button');
@@ -180,16 +183,44 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function updateScore() {
-        if (tapTimes.length < 2) return;
+        const elapsedSeconds = progressStartTime ? (Date.now() - progressStartTime) / 1000 : 0;
+        const scoreData = computeScoreData(elapsedSeconds);
+        scoreDisplay.textContent = `Score: ${Math.round(scoreData.totalScore)}`;
+    }
+
+    function getScoringIntervals() {
         const intervals = [];
         for (let i = 1; i < tapTimes.length; i++) {
-            intervals.push((tapTimes[i] - tapTimes[i-1]) / 1000); // seconds
+            intervals.push((tapTimes[i] - tapTimes[i - 1]) / 1000);
         }
-        const avgInterval = intervals.reduce((a, b) => a + b) / intervals.length;
+
+        const maxTempoInterval = targetBeatInterval * pauseIntervalMultiplier;
+        return intervals.filter((interval) => interval >= 0.08 && interval <= maxTempoInterval);
+    }
+
+    function computeScoreData(elapsedSeconds) {
+        const usableIntervals = getScoringIntervals();
+        const avgInterval = usableIntervals.length > 0
+            ? usableIntervals.reduce((a, b) => a + b, 0) / usableIntervals.length
+            : targetBeatInterval;
+
         const userBpm = 60 / avgInterval;
-        const accuracy = Math.max(0, 100 - Math.abs(bpm - userBpm));
+        const tempoAccuracy = Math.max(0, 100 - Math.abs(bpm - userBpm));
+
+        const expectedBeats = Math.max(0, elapsedSeconds / targetBeatInterval);
+        const missedBeats = Math.max(0, expectedBeats - tapTimes.length);
+
+        // Decay from missed beats, not from long pauses between taps.
+        const missDecay = Math.exp(-missedBeatPenalty * missedBeats);
+        const accuracy = Math.max(0, Math.min(100, tempoAccuracy * missDecay));
         const totalScore = accuracy * 100;
-        scoreDisplay.textContent = `Score: ${Math.round(totalScore)}`;
+
+        return {
+            userBpm,
+            accuracy,
+            totalScore,
+            missedBeats,
+        };
     }
 
     async function calculateScore() {
@@ -198,21 +229,17 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('game-area').style.display = 'none';
             results.style.display = 'block';
         } else {
-            const intervals = [];
-            for (let i = 1; i < tapTimes.length; i++) {
-                intervals.push((tapTimes[i] - tapTimes[i-1]) / 1000);
-            }
-            const avgInterval = intervals.reduce((a, b) => a + b) / intervals.length;
-            const userBpm = 60 / avgInterval;
-            const accuracy = Math.max(0, 100 - Math.abs(bpm - userBpm));
-            const totalScore = accuracy * 100;
+            const elapsedSeconds = progressStartTime
+                ? Math.min(MAX_PLAY_SECONDS, (Date.now() - progressStartTime) / 1000)
+                : MAX_PLAY_SECONDS;
+            const scoreData = computeScoreData(elapsedSeconds);
             
             // Store score data for submission after Turnstile
-            currentScore = Math.round(totalScore);
-            currentAccuracy = Math.round(accuracy);
-            currentUserBpm = Math.round(userBpm);
+            currentScore = Math.round(scoreData.totalScore);
+            currentAccuracy = Math.round(scoreData.accuracy);
+            currentUserBpm = Math.round(scoreData.userBpm);
             
-            finalScore.innerHTML = `Total Score: ${currentScore} / 10000<br>Accuracy: ${currentAccuracy}%<br>Your BPM: ${currentUserBpm}, Actual BPM: ${bpm}`;
+            finalScore.innerHTML = `Total Score: ${currentScore} / 10000<br>Accuracy: ${currentAccuracy}%<br>Your BPM: ${currentUserBpm}, Actual BPM: ${bpm}<br>Missed Beats: ${Math.round(scoreData.missedBeats)}`;
             
             document.getElementById('game-area').style.display = 'none';
             results.style.display = 'block';
