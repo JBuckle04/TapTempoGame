@@ -2,8 +2,8 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f0f0f0;
-    color: #333;
+    background-color: #1a1a1a;
+    color: #f0f0f0;
 }
 
 .container {
@@ -14,7 +14,7 @@ body {
 }
 
 h1 {
-    color: #007bff;
+    color: #00d4ff;
 }
 
 #track-list {
@@ -26,7 +26,7 @@ h1 {
 .track-button {
     padding: 15px;
     font-size: 18px;
-    background-color: #007bff;
+    background-color: #00a8ff;
     color: white;
     border: none;
     border-radius: 5px;
@@ -35,33 +35,38 @@ h1 {
 }
 
 .track-button:hover {
-    background-color: #0056b3;
+    background-color: #0084cc;
 }
 
 #game-area {
     margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
 }
 
 #tap-button {
     width: 200px;
     height: 200px;
     font-size: 24px;
-    background-color: #28a745;
+    background-color: #00d977;
     color: white;
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    margin: 20px;
     transition: background-color 0.1s;
 }
 
 #tap-button:active {
-    background-color: #1e7e34;
+    background-color: #00a84f;
 }
 
 #score-display {
     font-size: 24px;
     margin: 20px 0;
+    color: #00d4ff;
 }
 
 button {
@@ -74,17 +79,17 @@ button {
 }
 
 #play-button {
-    background-color: #ffc107;
-    color: black;
+    background-color: #ff9800;
+    color: white;
 }
 
 #stop-button {
-    background-color: #dc3545;
+    background-color: #d32f2f;
     color: white;
 }
 
 #back-button {
-    background-color: #6c757d;
+    background-color: #424242;
     color: white;
 }
 
@@ -92,6 +97,10 @@ button {
 @media (max-width: 768px) {
     .container {
         padding: 10px;
+    }
+
+    #game-area {
+        min-height: 350px;
     }
 
     #tap-button {
