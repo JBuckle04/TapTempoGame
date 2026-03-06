@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const MAX_PLAY_SECONDS = 100;
     const targetBeatInterval = 60 / bpm;
     const pauseIntervalMultiplier = 2.25;
-    const missedBeatPenalty = 0.06;
+    const missedBeatPenaltyPerSecond = 0.045;
     let progressInterval = null;
     let progressStartTime = null;
     const tapButton = document.getElementById('tap-button');
@@ -46,6 +46,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentAccuracy = null;
     let currentUserBpm = null;
     let turnstileToken = null;
+    let liveMissDecayMultiplier = 1;
+    let lastDecaySecond = 0;
 
     if (userDisplayGame) {
         const currentUser = getUserName() || 'Anonymous';
@@ -116,6 +118,8 @@ document.addEventListener('DOMContentLoaded', function() {
         isPlaying = true;
         songCompleted = false;
         tapTimes = [];
+        liveMissDecayMultiplier = 1;
+        lastDecaySecond = 0;
         scoreDisplay.textContent = 'Score: 0';
         results.style.display = 'none';
         document.getElementById('game-area').style.display = 'block';
@@ -129,6 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!isPlaying) return;
             const elapsedSeconds = (Date.now() - progressStartTime) / 1000;
             updateProgressUi(elapsedSeconds);
+            updateScore();
 
             if (elapsedSeconds >= MAX_PLAY_SECONDS) {
                 audio.pause();
@@ -188,6 +193,23 @@ document.addEventListener('DOMContentLoaded', function() {
         scoreDisplay.textContent = `Score: ${Math.round(scoreData.totalScore)}`;
     }
 
+    function applyMissDecayForElapsedTime(elapsedSeconds) {
+        const wholeSeconds = Math.floor(Math.max(0, elapsedSeconds));
+        if (wholeSeconds <= lastDecaySecond) return;
+
+        for (let second = lastDecaySecond + 1; second <= wholeSeconds; second++) {
+            const expectedBeatsAtSecond = Math.floor(second / targetBeatInterval);
+            const missedBeatsAtSecond = Math.max(0, expectedBeatsAtSecond - tapTimes.length);
+
+            // If the player is behind, decay once per second so the drop is visible over time.
+            if (missedBeatsAtSecond > 0) {
+                liveMissDecayMultiplier *= Math.exp(-missedBeatPenaltyPerSecond * missedBeatsAtSecond);
+            }
+        }
+
+        lastDecaySecond = wholeSeconds;
+    }
+
     function getScoringIntervals() {
         const intervals = [];
         for (let i = 1; i < tapTimes.length; i++) {
@@ -199,6 +221,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function computeScoreData(elapsedSeconds) {
+        applyMissDecayForElapsedTime(elapsedSeconds);
+
         const usableIntervals = getScoringIntervals();
         const avgInterval = usableIntervals.length > 0
             ? usableIntervals.reduce((a, b) => a + b, 0) / usableIntervals.length
@@ -210,9 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const expectedBeats = Math.max(0, elapsedSeconds / targetBeatInterval);
         const missedBeats = Math.max(0, expectedBeats - tapTimes.length);
 
-        // Decay from missed beats, not from long pauses between taps.
-        const missDecay = Math.exp(-missedBeatPenalty * missedBeats);
-        const accuracy = Math.max(0, Math.min(100, tempoAccuracy * missDecay));
+        const accuracy = Math.max(0, Math.min(100, tempoAccuracy * liveMissDecayMultiplier));
         const totalScore = accuracy * 100;
 
         return {
