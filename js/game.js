@@ -20,10 +20,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const results = document.getElementById('results');
     const finalScore = document.getElementById('final-score');
     const backButton = document.getElementById('back-button');
+    const submitScoreButton = document.getElementById('submit-score-button');
 
     let tapTimes = [];
     let isPlaying = false;
     let songCompleted = false;
+    let currentScore = null;
+    let currentAccuracy = null;
+    let currentUserBpm = null;
+    let turnstileToken = null;
 
     playButton.addEventListener('click', () => {
         audio.play();
@@ -87,6 +92,8 @@ document.addEventListener('DOMContentLoaded', function() {
     async function calculateScore() {
         if (tapTimes.length < 2) {
             finalScore.textContent = 'Not enough taps to calculate score.';
+            document.getElementById('game-area').style.display = 'none';
+            results.style.display = 'block';
         } else {
             const intervals = [];
             for (let i = 1; i < tapTimes.length; i++) {
@@ -96,18 +103,70 @@ document.addEventListener('DOMContentLoaded', function() {
             const userBpm = 60 / avgInterval;
             const accuracy = Math.max(0, 100 - Math.abs(bpm - userBpm));
             const totalScore = accuracy * 100;
-            finalScore.innerHTML = `Total Score: ${Math.round(totalScore)} / 10000<br>Accuracy: ${Math.round(accuracy)}%<br>Your BPM: ${Math.round(userBpm)}, Actual BPM: ${bpm}`;
             
-            // Save score to Supabase
-            await saveScore(name, Math.round(totalScore), Math.round(accuracy), Math.round(userBpm), bpm);
+            // Store score data for submission after Turnstile
+            currentScore = Math.round(totalScore);
+            currentAccuracy = Math.round(accuracy);
+            currentUserBpm = Math.round(userBpm);
             
+            finalScore.innerHTML = `Total Score: ${currentScore} / 10000<br>Accuracy: ${currentAccuracy}%<br>Your BPM: ${currentUserBpm}, Actual BPM: ${bpm}`;
+            
+            document.getElementById('game-area').style.display = 'none';
+            results.style.display = 'block';
+            
+            // Render Turnstile widget
+            renderTurnstile();
+        }
+    }
+
+    function renderTurnstile() {
+        const container = document.getElementById('turnstile-widget');
+        if (container && window.turnstile) {
+            // Clear any existing widget
+            container.innerHTML = '';
+            window.turnstile.render('#turnstile-widget', {
+                sitekey: '0x4AAAAAACnZk3PXsNtC9t-g', // Replace with your actual site key
+                theme: 'dark',
+                callback: handleTurnstileSuccess,
+                'error-callback': handleTurnstileError,
+            });
+        }
+    }
+
+    function handleTurnstileSuccess(token) {
+        turnstileToken = token;
+        submitScoreButton.disabled = false;
+        submitScoreButton.style.backgroundColor = '#00d977';
+    }
+
+    function handleTurnstileError() {
+        submitScoreButton.disabled = true;
+        submitScoreButton.style.backgroundColor = '#d32f2f';
+    }
+
+    submitScoreButton.addEventListener('click', async () => {
+        if (!turnstileToken) {
+            alert('Please complete the verification');
+            return;
+        }
+        
+        submitScoreButton.disabled = true;
+        submitScoreButton.textContent = 'Submitting...';
+        
+        // Save score to Supabase with Turnstile token
+        const success = await saveScore(name, currentScore, currentAccuracy, currentUserBpm, bpm, turnstileToken);
+        
+        if (success) {
             // Fetch and display leaderboard
             const leaderboard = await getTrackLeaderboard(name, 10);
             displayLeaderboard(leaderboard);
+            submitScoreButton.style.display = 'none';
+        } else {
+            submitScoreButton.disabled = false;
+            submitScoreButton.textContent = 'Submit Score to Leaderboard';
+            alert('Failed to submit score. Please try again.');
         }
-        document.getElementById('game-area').style.display = 'none';
-        results.style.display = 'block';
-    }
+    });
 
     function displayLeaderboard(leaderboard) {
         const leaderboardDisplay = document.getElementById('leaderboard-display');

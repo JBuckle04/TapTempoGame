@@ -22,11 +22,11 @@ function setUserName(name) {
 }
 
 // Save score to Supabase
-async function saveScore(trackName, score, accuracy, userBpm, actualBpm) {
+async function saveScore(trackName, score, accuracy, userBpm, actualBpm, turnstileToken) {
     const userName = getUserName();
     if (!userName) {
         console.error('No user name set');
-        return;
+        return false;
     }
 
     try {
@@ -40,6 +40,7 @@ async function saveScore(trackName, score, accuracy, userBpm, actualBpm) {
                     accuracy: accuracy,
                     user_bpm: userBpm,
                     actual_bpm: actualBpm,
+                    turnstile_token: turnstileToken,
                     created_at: new Date().toISOString()
                 }
             ]);

@@ -117,6 +117,26 @@ button:disabled {
     text-align: left;
 }
 
+#captcha-message {
+    color: #00d4ff;
+    font-size: 14px;
+    margin: 15px 0 10px 0;
+}
+
+#submit-score-button {
+    background-color: #999;
+    color: white;
+    padding: 12px 24px;
+    font-size: 16px;
+    margin-top: 15px;
+    cursor: not-allowed;
+}
+
+#submit-score-button:not(:disabled) {
+    background-color: #00d977;
+    cursor: pointer;
+}
+
 .leaderboard-table {
     width: 100%;
     border-collapse: collapse;
