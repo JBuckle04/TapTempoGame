@@ -7,11 +7,22 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <div class="container">
+    <div class="nav-header">
         <h1 id="track-title">Track Title</h1>
+        <div class="nav-right">
+            <p id="user-display-game" class="user-display">Player: Loading...</p>
+            <button id="change-name-btn-game" class="nav-button">Change Name</button>
+            <button id="back-to-menu-btn" class="nav-button">Back to Tracks</button>
+        </div>
+    </div>
+    <div class="container">
         <div id="game-area">
             <button id="tap-button">TAP</button>
             <div id="score-display">Score: 0</div>
+            <div id="progress-container">
+                <div id="progress-bar"></div>
+            </div>
+            <p id="progress-time">0 / 100 seconds</p>
             <p id="instructions">Complete the song to submit your score!</p>
             <button id="play-button">Play Track</button>
             <button id="stop-button" disabled>Pause</button>
@@ -28,6 +39,23 @@
             <button id="back-button">Back to Tracks</button>
         </div>
     </div>
+
+    <div id="name-modal-game" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Change Player Name</h2>
+                <button class="modal-close" id="modal-close-game">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="new-name-input-game" placeholder="Enter new name" class="name-input">
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-btn-game" class="modal-button cancel">Cancel</button>
+                <button id="confirm-btn-game" class="modal-button confirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="js/supabase-config.js"></script>

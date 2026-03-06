@@ -13,6 +13,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('track-title').textContent = name;
 
     const audio = new Audio(`tracks/${trackFile}`);
+    const progressBar = document.getElementById('progress-bar');
+    const progressTime = document.getElementById('progress-time');
+    const MAX_PLAY_SECONDS = 100;
+    let progressInterval = null;
+    let progressStartTime = null;
     const tapButton = document.getElementById('tap-button');
     const playButton = document.getElementById('play-button');
     const stopButton = document.getElementById('stop-button');
@@ -21,6 +26,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const finalScore = document.getElementById('final-score');
     const backButton = document.getElementById('back-button');
     const submitScoreButton = document.getElementById('submit-score-button');
+    const backToMenuBtn = document.getElementById('back-to-menu-btn');
+    const userDisplayGame = document.getElementById('user-display-game');
+
+    const nameModal = document.getElementById('name-modal-game');
+    const changeNameBtn = document.getElementById('change-name-btn-game');
+    const modalClose = document.getElementById('modal-close-game');
+    const cancelBtn = document.getElementById('cancel-btn-game');
+    const confirmBtn = document.getElementById('confirm-btn-game');
+    const nameInput = document.getElementById('new-name-input-game');
 
     let tapTimes = [];
     let isPlaying = false;
@@ -30,7 +44,71 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentUserBpm = null;
     let turnstileToken = null;
 
+    if (userDisplayGame) {
+        const currentUser = getUserName() || 'Anonymous';
+        userDisplayGame.textContent = `Player: ${currentUser}`;
+    }
+
+    function updateProgressUi(elapsedSeconds) {
+        const clamped = Math.min(MAX_PLAY_SECONDS, Math.max(0, elapsedSeconds));
+        const percent = (clamped / MAX_PLAY_SECONDS) * 100;
+        if (progressBar) progressBar.style.width = `${percent}%`;
+        if (progressTime) progressTime.textContent = `${Math.floor(clamped)} / ${MAX_PLAY_SECONDS} seconds`;
+    }
+
+    function openNameModal() {
+        if (!nameModal || !nameInput) return;
+        nameInput.value = getUserName() || '';
+        nameModal.style.display = 'flex';
+        nameInput.focus();
+        nameInput.select();
+    }
+
+    function closeNameModal() {
+        if (!nameModal) return;
+        nameModal.style.display = 'none';
+    }
+
+    function applyNewName() {
+        if (!nameInput) return;
+        const nextName = nameInput.value.trim();
+        if (!nextName) {
+            alert('Please enter a valid name.');
+            return;
+        }
+        setUserName(nextName);
+        if (userDisplayGame) {
+            userDisplayGame.textContent = `Player: ${nextName}`;
+        }
+        closeNameModal();
+    }
+
+    if (changeNameBtn) {
+        changeNameBtn.addEventListener('click', openNameModal);
+    }
+    if (modalClose) {
+        modalClose.addEventListener('click', closeNameModal);
+    }
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', closeNameModal);
+    }
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', applyNewName);
+    }
+    if (nameInput) {
+        nameInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') applyNewName();
+            if (event.key === 'Escape') closeNameModal();
+        });
+    }
+    if (nameModal) {
+        nameModal.addEventListener('click', (event) => {
+            if (event.target === nameModal) closeNameModal();
+        });
+    }
+
     playButton.addEventListener('click', () => {
+        audio.currentTime = 0;
         audio.play();
         isPlaying = true;
         songCompleted = false;
@@ -40,6 +118,27 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('game-area').style.display = 'block';
         playButton.disabled = true;
         stopButton.disabled = false;
+
+        updateProgressUi(0);
+        progressStartTime = Date.now();
+        if (progressInterval) clearInterval(progressInterval);
+        progressInterval = setInterval(() => {
+            if (!isPlaying) return;
+            const elapsedSeconds = (Date.now() - progressStartTime) / 1000;
+            updateProgressUi(elapsedSeconds);
+
+            if (elapsedSeconds >= MAX_PLAY_SECONDS) {
+                audio.pause();
+                audio.currentTime = 0;
+                isPlaying = false;
+                songCompleted = true;
+                playButton.disabled = false;
+                stopButton.disabled = true;
+                clearInterval(progressInterval);
+                updateProgressUi(MAX_PLAY_SECONDS);
+                calculateScore();
+            }
+        }, 100);
     });
 
     stopButton.addEventListener('click', () => {
@@ -49,6 +148,8 @@ document.addEventListener('DOMContentLoaded', function() {
         playButton.disabled = false;
         stopButton.disabled = true;
         scoreDisplay.textContent = 'Song paused. Click Play to try again.';
+        if (progressInterval) clearInterval(progressInterval);
+        updateProgressUi(0);
     });
 
     // When the song ends, calculate and submit the score
@@ -57,6 +158,8 @@ document.addEventListener('DOMContentLoaded', function() {
         songCompleted = true;
         playButton.disabled = false;
         stopButton.disabled = true;
+        if (progressInterval) clearInterval(progressInterval);
+        updateProgressUi(MAX_PLAY_SECONDS);
         calculateScore();
     });
 
@@ -189,6 +292,15 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.href = 'index.html';
     });
 
+    if (backToMenuBtn) {
+        backToMenuBtn.addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+    }
+
     // Prevent context menu on tap button for mobile
     tapButton.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // Ensure progress bar is visible before playback starts.
+    updateProgressUi(0);
 });
