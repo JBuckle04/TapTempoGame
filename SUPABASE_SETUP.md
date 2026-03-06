@@ -22,15 +22,24 @@ CREATE TABLE leaderboard (
     accuracy INTEGER NOT NULL,
     user_bpm INTEGER,
     actual_bpm INTEGER,
+    turnstile_token TEXT,
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Create an index for faster queries
+-- Create indexes for faster queries
 CREATE INDEX idx_track_name ON leaderboard(track_name);
 CREATE INDEX idx_score ON leaderboard(score DESC);
 ```
 
-## 3. Enable Row Level Security (RLS)
+## 3. Fix Existing Table (If Already Created)
+
+If you already created the table without the `turnstile_token` column, add it with:
+
+```sql
+ALTER TABLE leaderboard ADD COLUMN turnstile_token TEXT;
+```
+
+## 4. Enable Row Level Security (RLS)
 
 In the Supabase dashboard:
 1. Go to **Authentication** → **Policies**
@@ -53,13 +62,13 @@ CREATE POLICY "Enable insert for all users"
   WITH CHECK (true);
 ```
 
-## 4. Get Your Credentials
+## 5. Get Your Credentials
 
 1. In the Supabase dashboard, click **Settings** (bottom left)
 2. Go to **API**
 3. Copy your **Project URL** and **Anon public key**
 
-## 5. Update the Configuration
+## 6. Update the Configuration
 
 Open `js/supabase-config.js` and replace:
 
@@ -68,19 +77,44 @@ const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
 const SUPABASE_ANON_KEY = 'YOUR_ANON_PUBLIC_KEY';
 ```
 
-With your actual credentials from step 4.
+With your actual credentials from step 5.
 
-## 6. Deploy
+## 7. Deploy
 
 Once configured, deploy your site to Cloudflare Pages. The leaderboard will automatically:
 - Store player names when they first visit
-- Save scores after each game
-- Display the top 10 scores for each track
+- Save scores after each game (must complete full song)
+- Display the top 10 scores for each track after Turnstile verification
 
-## Testing
+## 8. Testing
 
 1. Visit your site
 2. Enter a player name
-3. Play a track
-4. The score should appear in the leaderboard
-5. Go back and check the leaderboard in the results screen
+3. Play a track to completion
+4. Complete the Turnstile challenge
+5. Click "Submit Score to Leaderboard"
+6. Check browser console (F12) for any errors
+7. The score should appear in the leaderboard
+
+## 9. Troubleshooting
+
+**Error: 400 Bad Request when posting score**
+- Open browser DevTools (F12) → Network tab
+- Try submitting a score and look at the failed request
+- Check the request body - should be JSON with track_name, user_name, score, etc.
+- Verify the leaderboard table has all required columns:
+  - `id` (BIGINT, auto-generated)
+  - `track_name` (TEXT)
+  - `user_name` (TEXT)
+  - `score` (INTEGER)
+  - `accuracy` (INTEGER)
+  - `user_bpm` (INTEGER)
+  - `actual_bpm` (INTEGER)
+  - `turnstile_token` (TEXT, optional)
+  - `created_at` (TIMESTAMP, auto-generated)
+
+**Scores not saving:**
+- Check browser console for error messages
+- Verify RLS policies are enabled and allow INSERT
+- Confirm Supabase credentials in `js/supabase-config.js` are correct
+- Check that Row Level Security policies don't have conflicting rules
